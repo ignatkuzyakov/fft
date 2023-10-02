@@ -2,14 +2,24 @@
 #include <complex>
 #include <iostream>
 #include <algorithm>
+#include <random>
 #include <iterator>
+#include <chrono>
 #include <vector>
 
 using complex = std::complex<double>;
 
+// timer
+#ifdef TIMER
+using std::chrono::duration_cast;
+using std::chrono::high_resolution_clock;
+using std::chrono::microseconds;
+#endif
+
 class Fourier
 {
 public:
+    // recursive fft (slow)
     template <typename Iter>
     static void fft(Iter first, Iter last)
     {
@@ -72,39 +82,51 @@ public:
 
 int main()
 {
-    size_t points;
-    const double step = 0.01;
+    size_t points = 100;
+    
+    std::vector<complex> result(points);
 
-    std::vector<complex> result;
+    std::random_device rd;
+    std::default_random_engine reng(rd());
+    std::uniform_int_distribution<int> dist(0, points);
 
-    for (double i = 0; i <= 2 * M_PI; i += step)
-        result.push_back({i, sin(i)});
+    std::generate(result.begin(), result.end(), [&dist, &reng]
+                  { return complex{(double)dist(reng), sin((double)dist(reng))}; });
 
-    points = result.size();
     points = Fourier::next_highest_power_of_2(points);
 
     size_t n = result.size();
     result.reserve(points);
 
-    for (double i = n; i < points; ++i)
+    for (double i = n; i < points; ++i) 
         result.push_back(0);
 
     std::vector<complex> input = result;
-
+#ifdef TIMER
+    auto tstart = high_resolution_clock::now();
+#endif
     Fourier::fft(std::begin(result), std::end(result));
+#ifdef TIMER
+    auto tfin = high_resolution_clock::now();
+
+    std::cout << "recursive fft:  " << duration_cast<microseconds>(tfin - tstart).count()
+              <<" microseconds"<< std::endl;
+#endif
+
+    Fourier::ifft(std::begin(result), std::end(result));
+
+#ifdef ERR
+
+    int i = 0;
+    for (auto &&x : result)
+        x -= input[i++];
 
     std::cout << '[';
-
     for (auto &&x : result)
     {
         std::cout << x.real() << " + " << x.imag() << 'i';
         std::cout << "; ";
     }
     std::cout << ']';
-
-    Fourier::ifft(std::begin(result), std::end(result));
-
-    int i = 0;
-    for (auto &&x : result)
-        x -= input[i++];
+#endif
 }
