@@ -30,16 +30,14 @@ public:
             return;
 
         std::vector<complex> even(N / 2);
-        std::vector<complex> odd(N / 2);
+        std::vector<complex> odd(N / 2);    
 
         int count = 0;
 
         std::for_each(first, last, [&](auto &&elem)
                       {
-            if(count % 2 == 0)
-                even[count / 2] = elem;
-            else 
-                odd[count / 2] = elem;
+            if(count % 2 == 0) even[count / 2] = elem;
+            else  odd[count / 2] = elem;
             ++count; });
 
         fft(std::begin(even), std::end(even));
@@ -76,6 +74,7 @@ public:
         N |= N >> 4;
         N |= N >> 8;
         N |= N >> 16;
+        N |= N >> 32;
         N++;
         return N;
     }
@@ -107,7 +106,7 @@ int main(int argc, char const *argv[])
     result.reserve(points);
 
     for (double i = n; i < points; ++i)
-        result.push_back(0);
+        result.emplace_back(0);
 
     std::vector<complex> input = result;
 
@@ -133,7 +132,7 @@ int main(int argc, char const *argv[])
     standard_deviation /= result.size();
     standard_deviation = std::sqrt(standard_deviation);
 
-    std::cout <<"standard deviation: "<<'[' << standard_deviation.real() << " + "
+    std::cout << "standard deviation: " << '[' << standard_deviation.real() << " + "
               << standard_deviation.imag() << 'i' << ']' << std::endl;
 
 #else
