@@ -6,6 +6,7 @@
 #include <iterator>
 #include <chrono>
 #include <vector>
+#include <string>
 
 using complex = std::complex<double>;
 
@@ -80,9 +81,13 @@ public:
     }
 };
 
-int main()
+int main(int argc, char const *argv[])
 {
-    size_t points = 256;
+    size_t points;
+    if (argc == 1)
+        points = 256;
+    else
+        points = std::stoi(argv[1]);
 
     std::vector<complex> result(points);
 
@@ -128,7 +133,7 @@ int main()
     standard_deviation /= result.size();
     standard_deviation = std::sqrt(standard_deviation);
 
-    std::cout << '[' << standard_deviation.real() << " + "
+    std::cout <<"standard deviation: "<<'[' << standard_deviation.real() << " + "
               << standard_deviation.imag() << 'i' << ']' << std::endl;
 
 #else
