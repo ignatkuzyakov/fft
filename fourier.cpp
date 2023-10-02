@@ -19,7 +19,7 @@ using std::chrono::microseconds;
 class Fourier
 {
 public:
-    // recursive fft (slow)
+    // recursive fft
     template <typename Iter>
     static void fft(Iter first, Iter last)
     {
@@ -82,8 +82,8 @@ public:
 
 int main()
 {
-    size_t points = 100;
-    
+    size_t points = 256;
+
     std::vector<complex> result(points);
 
     std::random_device rd;
@@ -93,30 +93,45 @@ int main()
     std::generate(result.begin(), result.end(), [&dist, &reng]
                   { return complex{(double)dist(reng), sin((double)dist(reng))}; });
 
+#ifdef TIMER
+    auto tstart = high_resolution_clock::now();
+#endif
     points = Fourier::next_highest_power_of_2(points);
 
     size_t n = result.size();
     result.reserve(points);
 
-    for (double i = n; i < points; ++i) 
+    for (double i = n; i < points; ++i)
         result.push_back(0);
 
     std::vector<complex> input = result;
-#ifdef TIMER
-    auto tstart = high_resolution_clock::now();
-#endif
+
     Fourier::fft(std::begin(result), std::end(result));
 #ifdef TIMER
     auto tfin = high_resolution_clock::now();
 
     std::cout << "recursive fft:  " << duration_cast<microseconds>(tfin - tstart).count()
-              <<" microseconds"<< std::endl;
+              << " microseconds" << std::endl;
 #endif
 
     Fourier::ifft(std::begin(result), std::end(result));
 
-#ifdef ERR
+#ifndef ALLERRS
+    int i = 0;
+    complex standard_deviation{};
+    for (auto &&x : result)
+    {
+        x -= input[i++];
+        x = std::pow(x, 2);
+        standard_deviation += x;
+    }
+    standard_deviation /= result.size();
+    standard_deviation = std::sqrt(standard_deviation);
 
+    std::cout << '[' << standard_deviation.real() << " + "
+              << standard_deviation.imag() << 'i' << ']' << std::endl;
+
+#else
     int i = 0;
     for (auto &&x : result)
         x -= input[i++];
