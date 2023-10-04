@@ -1,5 +1,5 @@
 # Fast Fourier Transform
-A C++ Implementation of the Fast Fourier Transform. Written using the radix 2 Cooley and Tukey Aglorithm.
+A C++ Implementation of the Fast Fourier Transform. Written using the radix 2 Cooley and Tukey Aglorithm with zero-padding option.
 
 # Math formulas
 <img src="https://latex.codecogs.com/svg.image?\inline&space;\LARGE&space;{\color{White}X_{(N)k}=X_{(N/2)(even)k}&plus;W_{N}^{k}X_{(N/2)(odd)k}" title="{\color{White}X_{(N)k}=X_{(N/2)(even)k}+W_{N}^{k}X_{(N/2)(odd)k}" />
@@ -15,8 +15,9 @@ you need at least c++14
 g++-13 -std=c++14 fourier.cpp -o fourier
 ```
 ```
-./fourier 1028 
+./fourier 1028
 ```
+
 Directives:
 
 -DTIMER (turn on the timer for fft function execution)
