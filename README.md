@@ -15,7 +15,7 @@ you need at least c++14
 g++-13 -std=c++14 fourier.cpp -o fourier
 ```
 ```
-./fourier 1028
+./fourier 1024
 ```
 
 Directives:
