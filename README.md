@@ -12,10 +12,10 @@ A C++ Implementation of the Fast Fourier Transform. Written using the radix 2 Co
 you need at least c++14
 
 ```
-g++-13 -std=c++14 fourier.cpp -o fourier
+g++-13 -std=c++14 fourier.cpp -o fourier -DTIMER -DDIFFERENCE
 ```
 ```
-./fourier 1024 -DTIMER -DDIFFERENCE
+./fourier 1024
 ```
 
 Directives:
