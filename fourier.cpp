@@ -22,7 +22,7 @@ class Fourier
 public:
     // recursive fft
     template <typename Iter>
-    static void fft(Iter first, Iter last)
+    static void recFFT(Iter first, Iter last)
     {
         auto N = std::distance(first, last);
 
@@ -30,18 +30,18 @@ public:
             return;
 
         std::vector<complex> even(N / 2);
-        std::vector<complex> odd(N / 2);    
+        std::vector<complex> odd(N / 2);
 
-        int count = 0;
+        size_t count = 0;
 
         std::for_each(first, last, [&](auto &&elem)
                       {
             if(count % 2 == 0) even[count / 2] = elem;
-            else  odd[count / 2] = elem;
+            else               odd[count / 2] = elem;
             ++count; });
 
-        fft(std::begin(even), std::end(even));
-        fft(std::begin(odd), std::end(odd));
+        recFFT(std::begin(even), std::end(even));
+        recFFT(std::begin(odd), std::end(odd));
 
         for (size_t k = 0; k < N / 2; ++k)
         {
@@ -51,18 +51,53 @@ public:
         }
     }
 
+    // no recursive fft
+    template <typename Iter>
+    static void norecFFT(Iter first, Iter last)
+    {
+        auto N = std::distance(first, last);
+        size_t lg = std::log2(N);
+
+        for (size_t i = 0, rev = 0; i < N; ++i, rev = 0)
+        {
+            for (size_t j = 0; j < lg; ++j)
+                if (i & (1 << j))
+                    rev |= 1 << (lg - 1 - j);
+
+            if (i < rev)
+                std::swap(*(first + i), *(first + rev));
+        }
+
+        for (size_t sz = 2; sz <= N; sz <<= 1)
+        {
+            for (size_t i = 0; i < N; i += sz)
+            {
+                complex w(1);
+                auto e = std::polar(1.0, (-2 * M_PI) / sz);
+                for (size_t j = 0; j < sz / 2; ++j)
+                {
+                    auto t = w * *(first + i + j + sz / 2);
+                    auto even = *(first + i + j);
+                    *(first + i + j) = even + t;
+                    *(first + i + j + sz / 2) = even - t;
+                    w *= e;
+                }
+            }
+        }
+    }
+
     template <typename Iter>
     static void ifft(Iter first, Iter last)
     {
         auto N = std::distance(first, last);
 
-        std::for_each(first, last, [](auto &&elem)
-                      { elem = {elem.real(), elem.imag() * -1}; });
+        std::for_each(first, last, [](auto &&elem) 
+                    { elem = {elem.real(), elem.imag() * -1}; });
 
-        fft(first, last);
+        recFFT(first, last);
 
-        std::for_each(first, last, [&](auto &&elem)
-                      { elem = {elem.real(), elem.imag() * -1};
+        std::for_each(first, last, [&](auto &&elem) 
+                    { elem = {elem.real(), elem.imag() * -1};
                         elem /= N; });
     }
 
@@ -83,6 +118,7 @@ public:
 int main(int argc, char const *argv[])
 {
     size_t points;
+
     if (argc == 1)
         points = 256;
     else
@@ -98,8 +134,17 @@ int main(int argc, char const *argv[])
                   { return complex{(double)dist(reng), sin((double)dist(reng))}; });
 
 #ifdef TIMER
+
     auto tstart = high_resolution_clock::now();
+
+    #ifdef DIFFERENCE
+
+        auto tstartNoRec = high_resolution_clock::now();
+
+    #endif
+
 #endif
+
     points = Fourier::next_highest_power_of_2(points);
 
     size_t n = result.size();
@@ -110,17 +155,42 @@ int main(int argc, char const *argv[])
 
     std::vector<complex> input = result;
 
-    Fourier::fft(std::begin(result), std::end(result));
+#ifdef DIFFERENCE
+
+    std::vector<complex> resultNoRec = result;
+
+    Fourier::norecFFT(std::begin(resultNoRec), std::end(resultNoRec));
+
+    #ifdef TIMER
+
+        auto tfinNoRec = high_resolution_clock::now();
+
+    #endif
+
+#endif
+
+    Fourier::recFFT(std::begin(result), std::end(result));
+
 #ifdef TIMER
+
     auto tfin = high_resolution_clock::now();
 
-    std::cout << "recursive fft:  " << duration_cast<microseconds>(tfin - tstart).count()
+    std::cout << "fft (recursive):     " << duration_cast<microseconds>(tfin - tstart).count()
               << " microseconds" << std::endl;
+
+    #ifdef DIFFERENCE
+
+        std::cout << "fft (no recursive):  " << duration_cast<microseconds>(tfinNoRec - tstartNoRec).count()
+                << " microseconds" << std::endl;
+
+    #endif
+
 #endif
 
     Fourier::ifft(std::begin(result), std::end(result));
 
 #ifndef ALLERRS
+
     int i = 0;
     complex standard_deviation{};
     for (auto &&x : result)
@@ -129,13 +199,34 @@ int main(int argc, char const *argv[])
         x = std::pow(x, 2);
         standard_deviation += x;
     }
+
     standard_deviation /= result.size();
     standard_deviation = std::sqrt(standard_deviation);
 
-    std::cout << "standard deviation: " << '[' << standard_deviation.real() << " + "
+    std::cout << "standard deviation (recursive):    " << '[' << standard_deviation.real() << " + "
               << standard_deviation.imag() << 'i' << ']' << std::endl;
 
+    #ifdef DIFFERENCE
+
+        int j = 0;
+        complex standard_deviation_NoRec{};
+        for (auto &&x : resultNoRec)
+        {
+            x -= input[j++];
+            x = std::pow(x, 2);
+            standard_deviation_NoRec += x;
+        }
+
+        standard_deviation_NoRec /= result.size();
+        standard_deviation_NoRec = std::sqrt(standard_deviation);
+
+        std::cout << "standard deviation (no recursive): " << '[' << standard_deviation_NoRec.real() << " + "
+              << standard_deviation_NoRec.imag() << 'i' << ']' << std::endl;
+
+#endif
+        
 #else
+
     int i = 0;
     for (auto &&x : result)
         x -= input[i++];
@@ -147,5 +238,23 @@ int main(int argc, char const *argv[])
         std::cout << "; ";
     }
     std::cout << ']';
+
+    #ifdef DIFFERENCE
+
+        std::cout << "none recursive: " << std::endl;
+        int i = 0;
+        for (auto &&x : result)
+            x -= input[i++];
+
+        std::cout << '[';
+        for (auto &&x : result)
+        {
+            std::cout << x.real() << " + " << x.imag() << 'i';
+            std::cout << "; ";
+        }
+        std::cout << ']';
+
+    #endif
+
 #endif
 }
