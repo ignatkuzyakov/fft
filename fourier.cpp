@@ -133,18 +133,6 @@ int main(int argc, char const *argv[])
     std::generate(result.begin(), result.end(), [&dist, &reng]
                   { return complex{(double)dist(reng), sin((double)dist(reng))}; });
 
-#ifdef TIMER
-
-    auto tstart = high_resolution_clock::now();
-
-    #ifdef DIFFERENCE
-
-        auto tstartNoRec = high_resolution_clock::now();
-
-    #endif
-
-#endif
-
     points = Fourier::next_highest_power_of_2(points);
 
     size_t n = result.size();
@@ -159,6 +147,12 @@ int main(int argc, char const *argv[])
 
     std::vector<complex> resultNoRec = result;
 
+    #ifdef TIMER
+
+        auto tstartNoRec = high_resolution_clock::now();
+
+    #endif
+
     Fourier::norecFFT(std::begin(resultNoRec), std::end(resultNoRec));
 
     #ifdef TIMER
@@ -166,6 +160,12 @@ int main(int argc, char const *argv[])
         auto tfinNoRec = high_resolution_clock::now();
 
     #endif
+
+#endif
+
+#ifdef TIMER
+
+    auto tstart = high_resolution_clock::now();
 
 #endif
 
@@ -257,4 +257,5 @@ int main(int argc, char const *argv[])
     #endif
 
 #endif
+
 }
