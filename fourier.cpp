@@ -7,6 +7,7 @@
 #include <chrono>
 #include <vector>
 #include <string>
+#include <functional>
 
 using complex = std::complex<double>;
 
@@ -86,15 +87,15 @@ public:
         }
     }
 
-    template <typename Iter>
-    static void ifft(Iter first, Iter last)
+    template <typename Iter, typename FFT>
+    static void ifft(Iter first, Iter last, FFT&& fft)
     {
         auto N = std::distance(first, last);
 
         std::for_each(first, last, [](auto &&elem) 
                     { elem = {elem.real(), elem.imag() * -1}; });
 
-        recFFT(first, last);
+        ::std::invoke(std::forward<FFT>(fft), first, last);
 
         std::for_each(first, last, [&](auto &&elem) 
                     { elem = {elem.real(), elem.imag() * -1};
@@ -114,6 +115,45 @@ public:
         return N;
     }
 };
+
+namespace utils
+{
+    template<typename T>
+    complex standard_deviation(const T& input, const T& output) 
+    {
+        size_t i = 0;
+        T result = output;
+        complex standard_deviation{};
+        for (auto &&x : result)
+        {
+            x -= input[i++];
+            x = std::pow(x, 2);
+            standard_deviation += x;
+        }
+
+        standard_deviation /= result.size();
+        standard_deviation = std::sqrt(standard_deviation);
+
+        return standard_deviation;
+    }
+    
+    template<typename T>
+    void print_difference(const T& input, const T& output)
+    {
+        size_t i = 0;
+        T result = output;
+        for (auto &&x : result)
+            x -= input[i++];
+
+        std::cout << '[';
+        for (auto &&x : result)
+        {
+            std::cout << x.real() << " + " << x.imag() << 'i';
+            std::cout << "; ";
+        }
+        std::cout << ']';
+    }
+}
 
 int main(int argc, char const *argv[])
 {
@@ -187,38 +227,20 @@ int main(int argc, char const *argv[])
 
 #endif
 
-    Fourier::ifft(std::begin(result), std::end(result));
+    Fourier::ifft(std::begin(result), std::end(result), &Fourier::recFFT<std::vector<complex>::iterator>);
 
 #ifndef ALLERRS
 
-    int i = 0;
-    complex standard_deviation{};
-    for (auto &&x : result)
-    {
-        x -= input[i++];
-        x = std::pow(x, 2);
-        standard_deviation += x;
-    }
-
-    standard_deviation /= result.size();
-    standard_deviation = std::sqrt(standard_deviation);
+    auto standard_deviation = utils::standard_deviation(input, result);
 
     std::cout << "standard deviation (recursive):    " << '[' << standard_deviation.real() << " + "
               << standard_deviation.imag() << 'i' << ']' << std::endl;
 
     #ifdef DIFFERENCE
 
-        int j = 0;
-        complex standard_deviation_NoRec{};
-        for (auto &&x : resultNoRec)
-        {
-            x -= input[j++];
-            x = std::pow(x, 2);
-            standard_deviation_NoRec += x;
-        }
+        Fourier::ifft(std::begin(resultNoRec), std::end(resultNoRec),  &Fourier::norecFFT<std::vector<complex>::iterator>);
 
-        standard_deviation_NoRec /= result.size();
-        standard_deviation_NoRec = std::sqrt(standard_deviation);
+        auto standard_deviation_NoRec = utils::standard_deviation(input, resultNoRec);
 
         std::cout << "standard deviation (no recursive): " << '[' << standard_deviation_NoRec.real() << " + "
               << standard_deviation_NoRec.imag() << 'i' << ']' << std::endl;
@@ -227,33 +249,12 @@ int main(int argc, char const *argv[])
         
 #else
 
-    int i = 0;
-    for (auto &&x : result)
-        x -= input[i++];
-
-    std::cout << '[';
-    for (auto &&x : result)
-    {
-        std::cout << x.real() << " + " << x.imag() << 'i';
-        std::cout << "; ";
-    }
-    std::cout << ']';
-
+    utils::print_difference(input, result);
+    
     #ifdef DIFFERENCE
 
-        std::cout << "none recursive: " << std::endl;
-        int i = 0;
-        for (auto &&x : result)
-            x -= input[i++];
-
-        std::cout << '[';
-        for (auto &&x : result)
-        {
-            std::cout << x.real() << " + " << x.imag() << 'i';
-            std::cout << "; ";
-        }
-        std::cout << ']';
-
+        utils::print_difference(input, resultNoRec);
+       
     #endif
 
 #endif
