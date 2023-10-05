@@ -9,7 +9,7 @@ A C++ Implementation of the Fast Fourier Transform. Written using the radix 2 Co
 <img src="https://latex.codecogs.com/svg.image?\inline&space;\LARGE&space;{\color{White}X_{(1)0}=x_{0}}" title="{\color{White}X_{(1)0}=x_{0}}" />
 
 # Compilation 
-you need at least c++14
+you need at least c++17
 
 ```
 g++-13 -std=c++17 fourier.cpp -o fourier -DTIMER -DDIFFERENCE
