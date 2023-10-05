@@ -29,4 +29,4 @@ Directives:
 
 -DALLERRS (show an array of errors as a MatLab form array)
 
--DIFFERENCE (the difference of standart deviation (or time if -DTIMER flag on) of recursive and no recursive function)
+-DDIFFERENCE (the difference of standart deviation (or time if -DTIMER flag on) of recursive and no recursive function)
