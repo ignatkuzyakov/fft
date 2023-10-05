@@ -29,10 +29,10 @@ Directives:
 Example of output:
 
 ```
-fft (recursive):     1571 microseconds
-fft (no recursive):  1164 microseconds
-standard deviation (recursive):    [1.2635e-14 + 3.62012e-14i]
-standard deviation (no recursive): [1.59652e-07 + 1.13375e-07i]
+fft (recursive):     1463 microseconds
+fft (no recursive):  1118 microseconds
+standard deviation (recursive):    [1.81708e-14 + 2.8272e-14i]
+standard deviation (no recursive): [4.04376e-12 + -1.37843e-14i]
 ```
 how we can see the non-recursive algorithm works a little faster, but with a larger error
 
