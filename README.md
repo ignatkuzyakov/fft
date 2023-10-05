@@ -1,5 +1,10 @@
 # Fast Fourier Transform
-A C++ Implementation of the Fast Fourier Transform. Written using the radix 2 Cooley and Tukey Aglorithm with zero-padding option.
+A C++ Implementation of the Fast Fourier Transform. Written using the radix 2 Cooley and Tukey Aglorithm and no recursive form with zero-padding option.
+
+# 
+I made two realisation of those algorithm
+
+you can see the performance differences below
 
 # Math formulas
 <img src="https://latex.codecogs.com/svg.image?\inline&space;\LARGE&space;{\color{White}X_{(N)k}=X_{(N/2)(even)k}&plus;W_{N}^{k}X_{(N/2)(odd)k}" title="{\color{White}X_{(N)k}=X_{(N/2)(even)k}+W_{N}^{k}X_{(N/2)(odd)k}" />
@@ -23,3 +28,5 @@ Directives:
 -DTIMER (turn on the timer for fft function execution)
 
 -DALLERRS (show an array of errors as a MatLab form array)
+
+-DIFFERENCE (the difference of standart deviation (or time if -DTIMER flag on) of recursive and no recursive function)
