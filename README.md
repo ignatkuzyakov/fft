@@ -22,7 +22,7 @@ Directives:
 
 -DTIMER (turn on the timer for fft function execution)
 
--DALLERRS (show an array of errors as a MatLab form array)
+-DALLPOINTS (show an array of points as a MatLab form array)
 
 -DDIFFERENCE (the difference of standart deviation (or time if -DTIMER flag on) of recursive and no recursive function)
 
