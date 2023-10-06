@@ -137,21 +137,16 @@ namespace utils
         return standard_deviation;
     }
     
-    template<typename T>
-    void print_difference(const T& input, const T& output)
+    template<typename T, typename U>
+    void print_points(const T& input, U& out)
     {
-        size_t i = 0;
-        T result = output;
-        for (auto &&x : result)
-            x -= input[i++];
-
-        std::cout << '[';
-        for (auto &&x : result)
+        out << '[';
+        for (auto &&x : input)
         {
-            std::cout << x.real() << " + " << x.imag() << 'i';
-            std::cout << "; ";
+            out << x.real() << " + " << x.imag() << 'i';
+            out << "; ";
         }
-        std::cout << ']';
+        out << ']'<< '\n';
     }
 }
 
@@ -229,7 +224,7 @@ int main(int argc, char const *argv[])
 
     Fourier::ifft(std::begin(result), std::end(result), &Fourier::recFFT<std::vector<complex>::iterator>);
 
-#ifndef ALLERRS
+#ifndef ALLPOINTS
 
     auto standard_deviation = utils::standard_deviation(input, result);
 
@@ -249,11 +244,13 @@ int main(int argc, char const *argv[])
         
 #else
 
-    utils::print_difference(input, result);
+    std::cout << "points (recursive):    ";
+    utils::print_points(result, std::cout);
     
     #ifdef DIFFERENCE
 
-        utils::print_difference(input, resultNoRec);
+        std::cout << "points (no recursive): ";
+        utils::print_points(resultNoRec, std::cout);
        
     #endif
 
