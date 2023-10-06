@@ -9,7 +9,8 @@
 #include <string>
 #include <functional>
 
-using complex = std::complex<double>;
+typedef long double Tp_;
+using complex = std::complex<Tp_>;
 
 // timer
 #ifdef TIMER
@@ -46,7 +47,7 @@ public:
 
         for (size_t k = 0; k < N / 2; ++k)
         {
-            auto t = std::polar(1.0, (-2 * M_PI * k) / N) * odd[k];
+            auto t = std::polar<Tp_>(1.0, (-2 * M_PI * k) / N) * odd[k];
             *(first + k) = even[k] + t;
             *(first + k + N / 2) = even[k] - t;
         }
@@ -74,7 +75,7 @@ public:
             for (size_t i = 0; i < N; i += sz)
             {
                 complex w(1);
-                auto e = std::polar(1.0, (-2 * M_PI) / sz);
+                auto e = std::polar<Tp_>(1.0, (-2 * M_PI) / sz);
                 for (size_t j = 0; j < sz / 2; ++j)
                 {
                     auto t = w * *(first + i + j + sz / 2);
@@ -88,17 +89,17 @@ public:
     }
 
     template <typename Iter, typename FFT>
-    static void ifft(Iter first, Iter last, FFT&& fft)
+    static void ifft(Iter first, Iter last, FFT &&fft)
     {
-        auto N = std::distance(first, last);
+        auto N = static_cast<Tp_>(std::distance(first, last));
 
-        std::for_each(first, last, [](auto &&elem) 
-                    { elem = {elem.real(), elem.imag() * -1}; });
+        std::for_each(first, last, [](auto &&elem)
+                      { elem = {elem.real(), elem.imag() * -1}; });
 
         ::std::invoke(std::forward<FFT>(fft), first, last);
 
-        std::for_each(first, last, [&](auto &&elem) 
-                    { elem = {elem.real(), elem.imag() * -1};
+        std::for_each(first, last, [&](auto &&elem)
+                      { elem = {elem.real(), elem.imag() * -1};
                         elem /= N; });
     }
 
@@ -118,8 +119,8 @@ public:
 
 namespace utils
 {
-    template<typename T>
-    complex standard_deviation(const T& input, const T& output) 
+    template <typename T>
+    complex standard_deviation(const T &input, const T &output)
     {
         size_t i = 0;
         T result = output;
@@ -136,9 +137,9 @@ namespace utils
 
         return standard_deviation;
     }
-    
-    template<typename T, typename U>
-    void print_points(const T& input, U& out)
+
+    template <typename T, typename U>
+    void print_points(const T &input, U &out)
     {
         out << '[';
         for (auto &&x : input)
@@ -146,7 +147,7 @@ namespace utils
             out << x.real() << " + " << x.imag() << 'i';
             out << "; ";
         }
-        out << ']'<< '\n';
+        out << ']' << '\n';
     }
 }
 
@@ -163,17 +164,17 @@ int main(int argc, char const *argv[])
 
     std::random_device rd;
     std::default_random_engine reng(rd());
-    std::uniform_int_distribution<int> dist(0, points);
+    std::uniform_int_distribution<size_t> dist(0, points);
 
     std::generate(result.begin(), result.end(), [&dist, &reng]
-                  { return complex{(double)dist(reng), sin((double)dist(reng))}; });
+                  { return complex{(Tp_)dist(reng), (Tp_)dist(reng)}; });
 
     points = Fourier::next_highest_power_of_2(points);
 
     size_t n = result.size();
     result.reserve(points);
 
-    for (double i = n; i < points; ++i)
+    for (Tp_ i = n, last = points; i < last; ++i)
         result.emplace_back(0);
 
     std::vector<complex> input = result;
@@ -182,19 +183,19 @@ int main(int argc, char const *argv[])
 
     std::vector<complex> resultNoRec = result;
 
-    #ifdef TIMER
+#ifdef TIMER
 
-        auto tstartNoRec = high_resolution_clock::now();
+    auto tstartNoRec = high_resolution_clock::now();
 
-    #endif
+#endif
 
     Fourier::norecFFT(std::begin(resultNoRec), std::end(resultNoRec));
 
-    #ifdef TIMER
+#ifdef TIMER
 
-        auto tfinNoRec = high_resolution_clock::now();
+    auto tfinNoRec = high_resolution_clock::now();
 
-    #endif
+#endif
 
 #endif
 
@@ -213,12 +214,12 @@ int main(int argc, char const *argv[])
     std::cout << "fft (recursive):     " << duration_cast<microseconds>(tfin - tstart).count()
               << " microseconds" << std::endl;
 
-    #ifdef DIFFERENCE
+#ifdef DIFFERENCE
 
-        std::cout << "fft (no recursive):  " << duration_cast<microseconds>(tfinNoRec - tstartNoRec).count()
-                << " microseconds" << std::endl;
+    std::cout << "fft (no recursive):  " << duration_cast<microseconds>(tfinNoRec - tstartNoRec).count()
+              << " microseconds" << std::endl;
 
-    #endif
+#endif
 
 #endif
 
@@ -231,29 +232,28 @@ int main(int argc, char const *argv[])
     std::cout << "standard deviation (recursive):    " << '[' << standard_deviation.real() << " + "
               << standard_deviation.imag() << 'i' << ']' << std::endl;
 
-    #ifdef DIFFERENCE
+#ifdef DIFFERENCE
 
-        Fourier::ifft(std::begin(resultNoRec), std::end(resultNoRec),  &Fourier::norecFFT<std::vector<complex>::iterator>);
+    Fourier::ifft(std::begin(resultNoRec), std::end(resultNoRec), &Fourier::norecFFT<std::vector<complex>::iterator>);
 
-        auto standard_deviation_NoRec = utils::standard_deviation(input, resultNoRec);
+    auto standard_deviation_NoRec = utils::standard_deviation(input, resultNoRec);
 
-        std::cout << "standard deviation (no recursive): " << '[' << standard_deviation_NoRec.real() << " + "
+    std::cout << "standard deviation (no recursive): " << '[' << standard_deviation_NoRec.real() << " + "
               << standard_deviation_NoRec.imag() << 'i' << ']' << std::endl;
 
 #endif
-        
+
 #else
 
     std::cout << "points (recursive):    ";
     utils::print_points(result, std::cout);
-    
-    #ifdef DIFFERENCE
 
-        std::cout << "points (no recursive): ";
-        utils::print_points(resultNoRec, std::cout);
-       
-    #endif
+#ifdef DIFFERENCE
+
+    std::cout << "points (no recursive): ";
+    utils::print_points(resultNoRec, std::cout);
 
 #endif
 
+#endif
 }
